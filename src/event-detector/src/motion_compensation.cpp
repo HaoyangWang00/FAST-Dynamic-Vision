@@ -33,8 +33,8 @@ void MotComp::main() {
   UpdateFC2world();
   IMU_buffer_.clear();  // clear the buffer after averaging
 
-  // notCompensate(&time_img_, &event_counts_);
-  rotationalCompensate(&time_img_, &event_counts_);
+  notCompensate(&time_img_, &event_counts_);
+  // rotationalCompensate(&time_img_, &event_counts_);
   // translationalCompensate(&time_img_, &event_counts_);
 }
 
@@ -267,8 +267,7 @@ void MotComp::rotationalCompensate(cv::Mat *timeImg, cv::Mat *eventCount) {
  * @brief translational motion-compensation
  *
  * Finally, we re-project each pixel to event camera's frame and use the average
- * timestamp
- * of events with same coordinate as the value(mean-timestamp) of this pixel.
+ * timestamp of events with same coordinate as the value(mean-timestamp) of this pixel.
  * @param timeImg
  */
 void MotComp::translationalCompensate(cv::Mat *timeImg, cv::Mat *eventCount) {
