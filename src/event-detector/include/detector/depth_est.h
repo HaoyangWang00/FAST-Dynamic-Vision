@@ -31,7 +31,7 @@
 
 using namespace cv;
 using namespace std;
-/**
+/**-
  * @brief depth detcion class
  *  you need use SetEventDetectionRes to give the event camera dection result
  *

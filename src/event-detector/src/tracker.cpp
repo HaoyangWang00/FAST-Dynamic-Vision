@@ -20,7 +20,8 @@ void TrackSingleObj::main() {
   ReadParameters(nh_);
 
   kNewObjThresTime = 0.3;  // 30 milliseconds
-  KNewObjThresDis = 200;  // 400 pixels
+  // KNewObjThresDis = 200;  // 400 pixels
+  KNewObjThresDis = 100;  // 400 pixels
 
   image_transport::ImageTransport it_img_rst(nh_);
   image_transport::ImageTransport it_depth_rst(nh_);
@@ -44,18 +45,18 @@ void TrackSingleObj::main() {
   imu_sub_ = nh_.subscribe(k_imu_topic_, 10, &TrackSingleObj::ImuCallback, this,
                            ros::TransportHints().tcpNoDelay());
 
-  depth_sub_ =
-      nh_.subscribe(k_depth_topic_, 1, &TrackSingleObj::DepthCallback, this);
+  // depth_sub_ =
+  //     nh_.subscribe(k_depth_topic_, 1, &TrackSingleObj::DepthCallback, this);
   odom_sub_ =
       nh_.subscribe(k_odometry_topic_, 10, &TrackSingleObj::OdometryCallback,
                     this, ros::TransportHints().tcpNoDelay());
 
   /* advertiser */
   image_pub_ = it_img_rst.advertise("/dvs/detection_res", 1);
-  depth_res_pub_ = it_depth_rst.advertise("/depth/res", 1);
+  // depth_res_pub_ = it_depth_rst.advertise("/depth/res", 1);
   time_image_pub_ = it_img_mid.advertise("/dvs/time_image", 1);
-  depth_pub_ =
-      nh_.advertise<geometry_msgs::PointStamped>("/cam_depth_bullet_point", 1);
+  // depth_pub_ =
+      // nh_.advertise<geometry_msgs::PointStamped>("/cam_depth_bullet_point", 1);
   start_avoidance_pub_ =
       nh_.advertise<geometry_msgs::PoseStamped>("/avoid_start_trigger", 1);
   bullet_estimate_pub_ =
@@ -87,7 +88,7 @@ void TrackSingleObj::EventsCallback(
 
   /* motion compensate input events */
   motion_compensation_->LoadEvents(emsg);
-  motion_compensation_->LoadDepth(depth_estimator_->GetDepth());
+  // motion_compensation_->LoadDepth(depth_estimator_->GetDepth());
 
   motion_compensation_->main();
 
@@ -110,7 +111,7 @@ void TrackSingleObj::EventsCallback(
   }
 
   /* project ROI into depth image */
-  depth_estimator_->SetEventDetectionRes(max_rect);
+  // depth_estimator_->SetEventDetectionRes(max_rect);
 
   small = time_image(max_rect);
   small.convertTo(small, CV_8U);
@@ -177,7 +178,7 @@ void TrackSingleObj::EventsCallback(
     point_in_plane.point.x = ekf_obj_.x_;
     point_in_plane.point.y = ekf_obj_.y_;
     bullet_estimate_pub_.publish(point_in_plane);
-    depth_estimator_->istart_ = true;
+    // depth_estimator_->istart_ = true;
     ROS_WARN("[DETECTION] TRAJECTORY PUBLISHED!");
   }
 
@@ -221,21 +222,21 @@ void TrackSingleObj::ImageCallback(const sensor_msgs::Image::ConstPtr &msg) {
    * event will not be triggered */
 }
 
-void TrackSingleObj::DepthCallback(const sensor_msgs::ImageConstPtr &msg) {
-  depth_estimator_->main(msg);
-  geometry_msgs::PointStamped depth_point;
-  depth_point = depth_estimator_->GetDepthPoint();
-  if (depth_estimator_->istart_) {
-    depth_pub_.publish(depth_point);
-  }
+// void TrackSingleObj::DepthCallback(const sensor_msgs::ImageConstPtr &msg) {
+//   depth_estimator_->main(msg);
+//   geometry_msgs::PointStamped depth_point;
+//   depth_point = depth_estimator_->GetDepthPoint();
+//   if (depth_estimator_->istart_) {
+//     depth_pub_.publish(depth_point);
+//   }
 
-  cv::Mat depth_visualize = depth_estimator_->GetDepthVisualization();
+//   cv::Mat depth_visualize = depth_estimator_->GetDepthVisualization();
 
-  sensor_msgs::ImagePtr depth_vis_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_visualize)
-          .toImageMsg();
-  depth_res_pub_.publish(depth_vis_msg);
-}
+//   sensor_msgs::ImagePtr depth_vis_msg =
+//       cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_visualize)
+//           .toImageMsg();
+//   depth_res_pub_.publish(depth_vis_msg);
+// }
 
 /**
  * @brief check if a new object is detected
@@ -256,7 +257,7 @@ inline bool TrackSingleObj::IsNewObj(
 
 
     if (dis > KNewObjThresDis) { // if two objects are too far
-    // TODO: Use KF to estimate new position and judge if it's a new object
+      // TODO: Use KF to estimate new position and judge if it's a new object
     } else {
       return false;
     }
