@@ -87,9 +87,11 @@ void ObjDetector::MorphologyOperations(cv::Mat *dst) {
   float thres = cv::mean(normed_time_image, event_counts_)[0] +
                 k_a_th_ * k_omega_ + k_b_th_;
   thres = cv::mean(normed_time_image, event_counts_)[0];
+
   cv::threshold(normed_time_image, m, thres, 1, cv::THRESH_TOZERO);
 
   /* Gaussian Blur */
+  // cv::blur(m, m, cv::Size(3, 3));
   cv::blur(m, m, cv::Size(5, 5));
   cv::normalize(m, m, 0, 255, cv::NORM_MINMAX);
 
@@ -104,6 +106,25 @@ void ObjDetector::MorphologyOperations(cv::Mat *dst) {
   cv::normalize(m, m, 0, 255, cv::NORM_MINMAX);
   m.convertTo(*dst, CV_8UC1);
 }
+
+// void ObjDetector::MorphologyOperations(cv::Mat *dst) {
+//   cv::Mat normed_time_image =
+//       cv::Mat::zeros(cv::Size(MAT_COLS, MAT_ROWS), CV_32FC1);
+
+//   cv::Mat m;  // image matrix
+
+//   /* normalization */
+//   cv::normalize(time_image_, normed_time_image, 0, 1, cv::NORM_MINMAX);
+
+//   /* thresholding */
+//   // float thres = cv::mean(normed_time_image, event_counts_)[0] +
+//   //               k_a_th_ * k_omega_ + k_b_th_;
+//   float thres = cv::mean(normed_time_image, event_counts_)[0];
+//   thres = cv::mean(normed_time_image, event_counts_)[0];
+//   cv::threshold(normed_time_image, m, thres, 1, cv::THRESH_TOZERO);
+
+//   m.convertTo(*dst, CV_8UC1);
+// }
 
 /**
  * @brief Gaussian Model iteration to find out the optimal ROI
@@ -315,11 +336,19 @@ void ObjDetector::GetRect(const cv::Mat &src, cv::Rect *O) {
  */
 cv::Mat ObjDetector::GetVisualization() {
   cv::Mat m, m_color;
+
+  // gray_image_
   // gray_image_.convertTo(m, CV_8UC1);
   cv::normalize(gray_image_, m, 0, 255, cv::NORM_MINMAX);
   cv::applyColorMap(m, m_color, cv::COLORMAP_JET);
+
+  // time_image_
+  // cv::normalize(time_image_, m, 0, 255, cv::NORM_MINMAX);
+  // m.convertTo(m, CV_8UC1);
+  // cv::applyColorMap(m, m_color, cv::COLORMAP_JET);
+
   if (is_object_) {  // draw bounding box
-    cv::rectangle(m_color, last_rect_, cv::Scalar(0, 255, 0), 2, cv::LINE_8, 0);
+    cv::rectangle(m_color, last_rect_, cv::Scalar(0, 0, 255), 2, cv::LINE_8, 0);
   }
   return m_color;
 }
@@ -385,7 +414,8 @@ inline void ObjDetector::GetVariance(const cv::Mat m, double *var) {
 inline bool ObjDetector::IsTrue(const cv::Rect &src, const cv::Rect &src2,
                                 const double &rx, const double &ry,
                                 const double &thres) {
-  return rx < 0.25 || ry < 0.25 ||
+  // return rx < 0.25 || ry < 0.25 ||
+  return rx < 0.2 || ry < 0.2 ||
          static_cast<double>(src.width * src.height) /
                  static_cast<double>(src2.width * src2.height) >
              thres;

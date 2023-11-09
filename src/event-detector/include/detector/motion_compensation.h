@@ -30,8 +30,10 @@
 #include "sensor_msgs/Imu.h"
 
 /* GLOBAL DEFINES */
-#define MAT_ROWS 480  // 240  //800
-#define MAT_COLS 640  // 346  //1280
+#define MAT_ROWS 240  // 240  //800
+#define MAT_COLS 346  // 346  //1280
+// #define MAT_ROWS 480  // 240  //800
+// #define MAT_COLS 640  // 346  //1280
 
 using std::vector;
 using namespace std;

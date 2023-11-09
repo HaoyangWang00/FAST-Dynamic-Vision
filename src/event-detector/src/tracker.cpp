@@ -47,6 +47,8 @@ void TrackSingleObj::main() {
 
   // depth_sub_ =
   //     nh_.subscribe(k_depth_topic_, 1, &TrackSingleObj::DepthCallback, this);
+  mmWave_sub_ =
+      nh_.subscribe(k_mmWave_topic_, 1, &TrackSingleObj::mmWaveCallback, this);
   odom_sub_ =
       nh_.subscribe(k_odometry_topic_, 10, &TrackSingleObj::OdometryCallback,
                     this, ros::TransportHints().tcpNoDelay());
@@ -57,6 +59,8 @@ void TrackSingleObj::main() {
   time_image_pub_ = it_img_mid.advertise("/dvs/time_image", 1);
   // depth_pub_ =
       // nh_.advertise<geometry_msgs::PointStamped>("/cam_depth_bullet_point", 1);
+  mmWave_pub_ =
+      nh_.advertise<sensor_msgs::PointCloud2>("/mmWave_bullet_point", 1000);
   start_avoidance_pub_ =
       nh_.advertise<geometry_msgs::PoseStamped>("/avoid_start_trigger", 1);
   bullet_estimate_pub_ =
@@ -67,7 +71,8 @@ void TrackSingleObj::main() {
 }
 
 void TrackSingleObj::ReadParameters(ros::NodeHandle &n) {
-  n.getParam("/detector_node/depth_topic", k_depth_topic_);
+  // n.getParam("/detector_node/depth_topic", k_depth_topic_);
+  n.getParam("/detector_node/mmWave_topic", k_mmWave_topic_);
   n.getParam("/detector_node/imu_topic", k_imu_topic_);
   n.getParam("/detector_node/raw_image_topic", k_img_raw_topic_);
   n.getParam("/detector_node/event_topic", k_event_topic_);
@@ -124,8 +129,8 @@ void TrackSingleObj::EventsCallback(
   point_in_plane.point.y = max_rect.y + max_rect.height * 0.5f;
   point_in_plane.point.z = 0;
 
-  // cout << "(" << point_in_plane.point.x << "," << point_in_plane.point.y << ")"
-  //      << std::endl;
+  cout << "Location in DAVIS: (" << point_in_plane.point.x << "," << point_in_plane.point.y << ")"
+       << std::endl;
 
   /* chech if new objects are detected */
   if (IsNewObj(point_in_plane)) {
@@ -137,7 +142,7 @@ void TrackSingleObj::EventsCallback(
     ekf_obj_.reset_data(point_in_plane.point.x, point_in_plane.point.y,
                         point_in_plane.header.stamp);
 
-    if (vis_trajs_.size() > 5) {
+    if (vis_trajs_.size() > 1) {
       /* buffer full, pop front */
       start_traj_id_++;
       vis_trajs_.pop_front();
@@ -146,7 +151,7 @@ void TrackSingleObj::EventsCallback(
       vis_trajs_.back().emplace_back(cv::Point2d(ekf_obj_.x_, ekf_obj_.y_));
     }
 
-    std::cout << "traj size: " << vis_trajs_.size() << std::endl;
+    // std::cout << "traj size: " << vis_trajs_.size() << std::endl;
 
   } else {
     /* still the old points
@@ -154,19 +159,19 @@ void TrackSingleObj::EventsCallback(
      * send a trigger to planner
      */
 
-    switch (state_) {
-      case ON: {
-        obj_count++;
-        if (obj_count > 4) {
-          PubTrigger();
-        }
-        break;
-      }
-      case TRIGGER_SENT:
-        break;
-      default:
-        break;
-    }
+    // switch (state_) {
+    //   case ON: {
+    //     obj_count++;
+    //     if (obj_count > 4) {
+    //       PubTrigger();
+    //     }
+    //     break;
+    //   }
+    //   case TRIGGER_SENT:
+    //     break;
+    //   default:
+    //     break;
+    // }
 
     ekf_obj_.add_new_obs(point_in_plane.point.x, point_in_plane.point.y,
                          point_in_plane.header.stamp);
@@ -179,7 +184,7 @@ void TrackSingleObj::EventsCallback(
     point_in_plane.point.y = ekf_obj_.y_;
     bullet_estimate_pub_.publish(point_in_plane);
     // depth_estimator_->istart_ = true;
-    ROS_WARN("[DETECTION] TRAJECTORY PUBLISHED!");
+    // ROS_WARN("[DETECTION] TRAJECTORY PUBLISHED!");
   }
 
   point_last_ = point_in_plane;
@@ -238,6 +243,10 @@ void TrackSingleObj::ImageCallback(const sensor_msgs::Image::ConstPtr &msg) {
 //   depth_res_pub_.publish(depth_vis_msg);
 // }
 
+void TrackSingleObj::mmWaveCallback(const sensor_msgs::PointCloud2 &msg) {
+  return;
+}
+
 /**
  * @brief check if a new object is detected
  * if two detection have a large time interval or a far distance,
@@ -248,7 +257,7 @@ void TrackSingleObj::ImageCallback(const sensor_msgs::Image::ConstPtr &msg) {
 inline bool TrackSingleObj::IsNewObj(
     const geometry_msgs::PointStamped &point_now) {
   if ((point_now.header.stamp - point_last_.header.stamp) >
-      ros::Duration(kNewObjThresTime)) {  // over than 10 milliseconds
+      ros::Duration(kNewObjThresTime)) {  // over than 30 milliseconds
     ROS_DEBUG("Time duration between two observations is too long");
   } else {
     double dx = point_now.point.x - point_last_.point.x;
@@ -309,7 +318,7 @@ void TrackSingleObj::Visualize() {
   }
   double ekf_obj_x, ekf_obj_y;
   ekf_obj_.GetPosition(&ekf_obj_x, &ekf_obj_y);
-  cv::circle(img, cv::Point2d(ekf_obj_x, ekf_obj_y), 2,
+  cv::circle(img, cv::Point2d(ekf_obj_x, ekf_obj_y), 1,
              cv::Scalar(255, 255, 255), 2);
   cv_bridge::CvImage cv_image(h, "bgr8", img);
   image_pub_.publish(cv_image.toImageMsg());

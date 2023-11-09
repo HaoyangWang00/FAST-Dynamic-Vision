@@ -39,6 +39,7 @@
 #include "detector/motion_compensation.h"
 #include "detector/obj_detector.h"
 #include "detector/velocity_est.h"
+#include <sensor_msgs/PointCloud2.h>
 
 using namespace std;
 
@@ -63,7 +64,7 @@ class TrackSingleObj {
 
   /* parameters */
   std::string k_img_raw_topic_, k_event_topic_, k_imu_topic_,
-    k_depth_topic_, k_odometry_topic_, k_imu_type_;
+    k_depth_topic_, k_odometry_topic_, k_imu_type_, k_mmWave_topic_;
   double kNewObjThresTime;  // time threshold for judging a new object
   double KNewObjThresDis;  // distance threshold for judging a new object
 
@@ -83,8 +84,8 @@ class TrackSingleObj {
   /* ROS utilities */
   ros::NodeHandle &nh_;
   ros::Subscriber img_raw_sub_, events_sub_, imu_sub_, trigger_sub_, depth_sub_,
-      odom_sub_;
-  ros::Publisher start_avoidance_pub_, bullet_estimate_pub_, depth_pub_;
+      odom_sub_, mmWave_sub_;
+  ros::Publisher start_avoidance_pub_, bullet_estimate_pub_, depth_pub_, mmWave_pub_;
   image_transport::Publisher image_pub_, depth_res_pub_, time_image_pub_;
 
   /* ROS functions */
@@ -95,6 +96,7 @@ class TrackSingleObj {
   void ImageCallback(const sensor_msgs::Image::ConstPtr &imsg);
   void EventsCallback(const dvs_msgs::EventArray::ConstPtr &emsg);
   void DepthCallback(const sensor_msgs::ImageConstPtr &msg);
+  void mmWaveCallback(const sensor_msgs::PointCloud2 &msg);
 
   /* inline functions */
   inline bool IsNewObj(const geometry_msgs::PointStamped &point_now);

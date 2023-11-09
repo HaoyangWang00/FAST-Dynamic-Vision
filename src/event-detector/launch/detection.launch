@@ -4,4 +4,15 @@
         <rosparam command="load" file="$(find detector)/config/default.yaml" />
     </node>         
 
+    <!--  Static transform from map to ti_mmwave_pcl for visualization of dvs and radar using Rviz -->
+    <node pkg="tf" type="static_transform_publisher" name="radar_baselink" args="0 0 0 0 0 0 ti_mmwave_pcl ti_mmwave 100"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="camera_baselink" args="-2 0 .95 -1.5707963267948966 0 -1.5707963267948966 ti_mmwave_pcl davis_left 100"/>
+    <!-- <node pkg="tf" type="static_transform_publisher" name="camera_baselink" args="-2 0 .95 -1.5707963267948966 0 -1.5707963267948966 ti_mmwave_pcl usb_webcam 100"/> -->
+
+    <node pkg="ti_mmwave_rospkg" type="radius_filter" name="radius_filter" output="screen"/>
+    <node pkg="ti_mmwave_rospkg" type="hungarian.py" name="hungarian" output="screen"/>
+    <node pkg="ti_mmwave_rospkg" type="showObject" name="clustering" output="screen"/>
+
+
 </launch>
